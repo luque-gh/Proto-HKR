@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class HoverController : MonoBehaviour {
+public class HoverController : MonoBehaviour, IHover
+{
 
     public float groundDistance = 1.5f;
     public float levitateJitter = 0.5f;
@@ -51,7 +52,7 @@ public class HoverController : MonoBehaviour {
         transform.Rotate(0, turn, 0);
     }
 
-    public void Shot()
+    public void ShotWeapon1()
     {
         if (lastShotElapsedTime >= shotMinInterval)
         {
@@ -64,11 +65,24 @@ public class HoverController : MonoBehaviour {
         }
     }
 
-    public void Damage(float value, Vector3 contactPos)
+    public void ShotWeapon2()
     {
+        //Nothing...
+    }
+
+    public void Damage(float value, Vector3 contactPos, IPlayable owner)
+    {
+        if (!IsAlive())
+        {
+            return;
+        }
         health -= value;
         if (health <= 0)
         {
+            if (owner != null)
+            { 
+                owner.IncrementFrag();
+            }
             rb.constraints = RigidbodyConstraints.None;
             rb.AddExplosionForce(1000, contactPos, 5, 2);
             rb.angularDrag = 0;
@@ -80,5 +94,10 @@ public class HoverController : MonoBehaviour {
     public bool IsAlive()
     {
         return health > 0;
+    }
+
+    public float GetHealth()
+    {
+        return health;
     }
 }

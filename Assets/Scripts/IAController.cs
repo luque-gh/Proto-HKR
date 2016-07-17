@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class IAController : MonoBehaviour {
+public class IAController : MonoBehaviour, IPlayable
+{
 
     public float respawnTime;
 
@@ -19,15 +20,16 @@ public class IAController : MonoBehaviour {
 
     private GameObject hover;
 
-    private float respawnCountDown;
-
-    private bool alive = false;
-
     private GameObject target = null;
 
+    private int deathCount = 0;
+
+    private int fragCount = 0;
+
     // Use this for initialization
-    void Start () {
-	
+    void Start ()
+    {
+        Invoke("Respawn", 1);
 	}
 
     // Update before physics
@@ -35,13 +37,7 @@ public class IAController : MonoBehaviour {
     {
         if (hover != null)
         {
-            IAControl();
-            alive = true;
-        }
-        else
-        {
-            Respawn();
-            alive = false;
+            ActionUpdate();
         }
     }
 
@@ -50,12 +46,20 @@ public class IAController : MonoBehaviour {
 	
 	}
 
-    private void IAControl()
+    public void ActionUpdate()
     {
         HoverController hoverController = hover.GetComponent<HoverController>();
         if (!hoverController.IsAlive())
         {
             hover = null;
+            Invoke("Respawn", respawnTime);
+
+            GameObject playerStatus = GameObject.FindGameObjectWithTag("PlayerStatus");
+            if (playerStatus != null)
+            {
+                playerStatus.GetComponent<IPlayable>().IncrementFrag();
+            }
+
             return;
         }
         if (target == null || !target.GetComponent< HoverController >().IsAlive())
@@ -96,7 +100,7 @@ public class IAController : MonoBehaviour {
             }
             if (dotForward < -turnLock)
             {
-                hoverController.Shot();
+                hoverController.ShotWeapon1();
             }
         }
     }
@@ -114,31 +118,30 @@ public class IAController : MonoBehaviour {
         }
     }
 
-    private void Respawn()
+    public void Respawn()
     {
-        if (alive)
+        GameObject[] respawnList = GameObject.FindGameObjectsWithTag("Respawn Enemy");
+        if (respawnList.Length > 0)
         {
-            GameObject playerStatus = GameObject.FindGameObjectWithTag("PlayerStatus");
-            if (playerStatus != null)
-            {
-                playerStatus.GetComponent<PlayerController>().addFrag();
-            }
-            respawnCountDown = respawnTime;
+            int selIndex = Random.Range(0, respawnList.Length);
+            hover = Instantiate(hoverPrefab, respawnList[selIndex].transform.position, respawnList[selIndex].transform.rotation) as GameObject;
+            hover.tag = "IA";
         }
-        else
-        {
-            respawnCountDown -= Time.fixedDeltaTime;
-            if (respawnCountDown <= 0)
-            {
-                GameObject[] respawnList = GameObject.FindGameObjectsWithTag("Respawn Enemy");
-                if (respawnList.Length > 0)
-                {
-                    int selIndex = Random.Range(0, respawnList.Length);
-                    hover = Instantiate(hoverPrefab, respawnList[selIndex].transform.position, respawnList[selIndex].transform.rotation) as GameObject;
-                    hover.tag = "IA";
-                }
-            }
-        }
+    }
+
+    public void IncrementFrag()
+    {
+        fragCount++;
+    }
+
+    public void DecrementFrag()
+    {
+        fragCount--;
+    }
+
+    public void IncrementDeaths()
+    {
+        deathCount++;
     }
 
 }

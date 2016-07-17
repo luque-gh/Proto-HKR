@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
-using System.Collections;
 using UnityEngine.UI;
 
-public class PlayerController : MonoBehaviour {
+public class PlayerController : MonoBehaviour, IPlayable
+{
 
     public float rotateSensitivity = 5;
 
@@ -18,11 +18,7 @@ public class PlayerController : MonoBehaviour {
 
     private GameObject hover;
 
-    private HoverController hoverController;
-
-    private float respawnCountDown;
-
-    private bool alive = false;
+    private IHover hoverController;
 
     private int deathCount = 0;
 
@@ -34,19 +30,14 @@ public class PlayerController : MonoBehaviour {
         uiHealth.text = "Health: 0";
         uiFrags.text = "Frags: 0";
         uiDeaths.text = "Deaths: 0";
+        Invoke("Respawn", 1);
     }
     // Update before physics
     void FixedUpdate()
     {
         if (hover != null)
         {
-            ControlHover();
-            alive = true;
-        }
-        else
-        {
-            Respawn();
-            alive = false;
+            ActionUpdate();
         }
     }
 
@@ -54,20 +45,16 @@ public class PlayerController : MonoBehaviour {
     void Update ()
     {
         //Slow...
-        uiHealth.text = "Health: " + hoverController.health.ToString();
+        uiHealth.text = "Health: " + hoverController.GetHealth().ToString();
     }
 
-    public void addFrag()
-    {
-        fragCount++;
-        uiFrags.text = "Frags: " + fragCount.ToString();
-    }
-
-    private void ControlHover()
+    public void ActionUpdate()
     {
         if (!hoverController.IsAlive())
         {
             hover = null;
+            IncrementDeaths();
+            Invoke("Respawn", respawnTime);
             return;
         }
         //Thrust + Strafe
@@ -76,35 +63,39 @@ public class PlayerController : MonoBehaviour {
         //rb.AddRelativeForce(move.x * hover.strafeForce, 0, move.z * hover.thrustForce);
         if (Input.GetButton("Fire1"))
         {
-            hoverController.Shot();
+            hoverController.ShotWeapon1();
         }
         //Rotate
         //transform.Rotate(0, Input.GetAxis("Mouse X") * rotateSensitivity, 0);
         //Shot
     }
 
-    private void Respawn()
+    public void Respawn()
     {
-        if (alive)
+        GameObject[] respawnList = GameObject.FindGameObjectsWithTag("Respawn Player");
+        if (respawnList.Length > 0)
         {
-            deathCount++;
-            uiDeaths.text = "Deaths: " + deathCount.ToString();
-            respawnCountDown = respawnTime;
+            int selIndex = Random.Range(0, respawnList.Length);
+            hover = Instantiate(hoverPrefab, respawnList[selIndex].transform.position, respawnList[selIndex].transform.rotation) as GameObject;
+            hover.tag = "Player";
+            hoverController = hover.GetComponent<IHover>();
         }
-        else
-        {
-            respawnCountDown -= Time.fixedDeltaTime;
-            if (respawnCountDown <= 0)
-            {
-                GameObject[] respawnList = GameObject.FindGameObjectsWithTag("Respawn Player");
-                if (respawnList.Length > 0)
-                {
-                    int selIndex = Random.Range(0, respawnList.Length);
-                    hover = Instantiate(hoverPrefab, respawnList[selIndex].transform.position, respawnList[selIndex].transform.rotation) as GameObject;
-                    hover.tag = "Player";
-                    hoverController = hover.GetComponent<HoverController>();
-                }
-            }
-        }
+    }
+
+    public void IncrementFrag()
+    {
+        fragCount++;
+        uiFrags.text = "Frags: " + fragCount.ToString();
+    }
+
+    public void DecrementFrag()
+    {
+        fragCount--;
+    }
+
+    public void IncrementDeaths()
+    {
+        deathCount++;
+        uiDeaths.text = "Deaths: " + deathCount.ToString();
     }
 }
