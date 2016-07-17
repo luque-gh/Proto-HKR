@@ -45,7 +45,7 @@ public class ShotController : MonoBehaviour
             HoverController hc = other.gameObject.GetComponent<HoverController>();
             if (hc != null)
             {
-                hc.Damage(damage, transform.position);
+                hc.Damage(damage, transform.position, null);
             }
         }
         Destroy(this.gameObject);
