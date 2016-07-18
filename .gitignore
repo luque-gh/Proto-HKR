@@ -16,6 +16,14 @@ $RECYCLE.BIN/
 Library/
 Temp/
 
+# VS Build outputs
+[Dd]ebug/
+[Rr]elease/
+x64/
+build/
+[Bb]in/
+[Oo]bj/
+
 # Windows Installer files
 *.cab
 *.msi
