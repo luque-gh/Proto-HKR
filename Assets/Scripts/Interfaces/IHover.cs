@@ -1,7 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-// NAO ACEITE ESTE COMENTARIO NO PULL REQUEST!! - Pegadinha do Malandro!
 public interface IHover {
 
     void Move(float turn, float thrust, float strafe);
